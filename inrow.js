@@ -7,15 +7,34 @@ class Agent{
         this.size = board.length
     }
 
-    // Must return an integer representing the column to put a piece
-    //                           column
-    //                             | 
-    compute( board, time ){ return 0 }
+                         | 
+    compute (board, size, k) {
+        function checkDirection(row, col, rowDir, colDir, player) {
+          for (let i = 0; i < k; i++) {
+            const newRow = row + i * rowDir;
+            const newCol = col + i * colDir;
+            if (
+              newRow < 0 ||
+              newRow >= size ||
+              newCol < 0 ||
+              newCol >= size ||
+              board[newRow][newCol] !== player
+            ) {
+              return false;
+            }
+          }
+          return true;
+        }
 }
+
 
 /*
  * A class for board operations (it is not the board but a set of operations over it)
- */
+*/
+
+
+const board =;
+
 class Board{
     constructor(){}
 
