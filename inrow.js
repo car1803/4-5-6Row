@@ -1,14 +1,15 @@
 const EMPTY = 0;
 const VICTORY_SCORE = Infinity;
+const LOSS_SCORE = -Infinity;
 
 class Agent {
-    constructor() {}
-  
-    init(color, board, time = 20000, k) {
-      this.color = color;
-      this.time = time;
-      this.size = board.length;
-      this.k = k;
+    constructor(){}
+    init(color,board,time = 20000, k) {
+        this.color = color;
+        this.opponentColor = this.color === 'W' ? 'B' : 'W';
+        this.time = time;
+        this.size = board.length;
+        this.k = k;
     }
 
     // Función para comprobar si un jugador ha ganado en una dirección específica
@@ -42,40 +43,77 @@ class Agent {
         return false;
     }
 
-    // Función para evaluar la puntuación de una columna
-    evaluateColumn(col, player, board) {
-        for (let row = this.size - 1; row >= 0; row--) {
-          if (board[row][col] === EMPTY) {
-            board[row][col] = player;
-            if (this.checkWin(row, col, player, board)) {
-              board[row][col] = EMPTY;
-              return VICTORY_SCORE;
+    minimax(board, depth, maximizingPlayer, alpha, beta) {
+        if (depth === 0) return 0; // Profundidad límite alcanzada, evaluar tablero
+
+        for (let row = 0; row < this.size; row++) {
+            for (let col = 0; col < this.size; col++) {
+            if (board[row][col] === EMPTY && this.checkWin(row, col, this.color, board)) {
+                return maximizingPlayer ? VICTORY_SCORE : LOSS_SCORE; // Evaluar si es estado de victoria o derrota
+            } else if (board[row][col] === EMPTY && this.checkWin(row, col, this.opponentColor, board)) {
+                return maximizingPlayer ? LOSS_SCORE : VICTORY_SCORE; // Evaluar si es estado de victoria o derrota para el oponente
             }
-            board[row][col] = EMPTY;
-          }
+            }
         }
-        return 0;
+        
+        if (maximizingPlayer) {
+            let maxEval = -Infinity;
+            for (let col = 0; col < this.size; col++) {
+            const row = this.findAvailableRow(board, col);
+            if (row !== -1) {
+                board[row][col] = this.color;
+                const score = this.minimax(board, depth - 1, false, alpha, beta);
+                board[row][col] = EMPTY;
+                maxEval = Math.max(maxEval, score);
+                alpha = Math.max(alpha, score);
+                if (beta <= alpha) break; // Poda Alfa-Beta
+            }
+            }
+            return maxEval;
+        } else {
+            let minEval = Infinity;
+            for (let col = 0; col < this.size; col++) {
+            const row = this.findAvailableRow(board, col);
+            if (row !== -1) {
+                board[row][col] = this.opponentColor;
+                const score = this.minimax(board, depth - 1, true, alpha, beta);
+                board[row][col] = EMPTY;
+                minEval = Math.min(minEval, score);
+                beta = Math.min(beta, score);
+                if (beta <= alpha) break; // Poda Alfa-Beta
+            }
+            }
+            return minEval;
+        }
     }
 
-    // Función principal para seleccionar la mejor columna
-    findBestMove(player, board) {
-        let bestColumn = -1;
-        let bestScore = -VICTORY_SCORE;
-    
-        for (let col = 0; col < this.size; col++) {
-          if (board[0][col] === EMPTY) {
-            const score = this.evaluateColumn(col, player, board);
-            if (score > bestScore) {
-              bestScore = score;
-              bestColumn = col;
-            }
-          }
+    findAvailableRow(board, col) {
+        for (let row = this.size - 1; row >= 0; row--) {
+            if (board[row][col] === EMPTY) return row;
         }
-        return bestColumn;
+        return -1;
     }
-    
-    compute(board, time) {
-        return this.findBestMove(this.color, board);
+
+    findBestMove(board, depth = 4) {
+        let bestMove = -1;
+        let maxEval = -Infinity;
+        for (let col = 0; col < this.size; col++) {
+            const row = this.findAvailableRow(board, col);
+            if (row !== -1) {
+            board[row][col] = this.color;
+            const moveEval = this.minimax(board, depth, false, -Infinity, Infinity);
+            board[row][col] = EMPTY;
+            if (moveEval > maxEval) {
+                maxEval = moveEval;
+                bestMove = col;
+            }
+            }
+        }
+        return bestMove;
+    }
+
+    compute(board) {
+        return this.findBestMove(board);
     }
 }
 
