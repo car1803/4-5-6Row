@@ -1,3 +1,6 @@
+const EMPTY = 0;
+const VICTORY_SCORE = Infinity;
+
 class Agent {
     constructor() {}
   
@@ -7,78 +10,75 @@ class Agent {
       this.size = board.length;
       this.k = k;
     }
-  
-    compute(board, time) {
-      // Función para comprobar si un jugador ha ganado en una dirección específica
-      function checkDirection(row, col, rowDir, colDir, player) {
+
+    // Función para comprobar si un jugador ha ganado en una dirección específica
+    checkDirection(row, col, rowDir, colDir, player, board) {
         for (let i = 0; i < this.k; i++) {
-          const newRow = row + i * rowDir;
-          const newCol = col + i * colDir;
-          if (
+            const newRow = row + i * rowDir;
+            const newCol = col + i * colDir;
+            if (
             newRow < 0 ||
             newRow >= this.size ||
             newCol < 0 ||
             newCol >= this.size ||
             board[newRow][newCol] !== player
-          ) {
+            ) {
             return false;
-          }
+            }
         }
         return true;
-      }
-  
-      // Función para verificar si un jugador ha ganado en cualquier dirección
-      function checkWin(row, col, player) {
+    }
+
+    // Función para verificar si un jugador ha ganado en cualquier dirección
+    checkWin(row, col, player) {
         const directions = [
-          [1, 0], [0, 1], [1, 1], [-1, 1] // Abajo, Derecha, Diagonal Derecha-Abajo, Diagonal Izquierda-Abajo
+            [1, 0], [0, 1], [1, 1], [-1, 1] // Abajo, Derecha, Diagonal Derecha-Abajo, Diagonal Izquierda-Abajo
         ];
-  
         for (const [rowDir, colDir] of directions) {
-          if (checkDirection.call(this, row, col, rowDir, colDir, player)) {
+            if (checkDirection.call(this, row, col, rowDir, colDir, player,board)) {
             return true;
-          }
-        }
-  
-        return false;
-      }
-  
-      // Función para evaluar la puntuación de una columna
-      function evaluateColumn(col, player) {
-        for (let row = this.size - 1; row >= 0; row--) {
-          if (board[row][col] === 0) {
-            board[row][col] = player;
-            if (checkWin.call(this, row, col, player)) {
-              board[row][col] = 0; // Deshacer la jugada
-              return Infinity; // Si esta jugada lleva a la victoria, devuelve un valor alto
             }
-            board[row][col] = 0; // Deshacer la jugada
+        }
+        return false;
+    }
+
+    // Función para evaluar la puntuación de una columna
+    evaluateColumn(col, player, board) {
+        for (let row = this.size - 1; row >= 0; row--) {
+          if (board[row][col] === EMPTY) {
+            board[row][col] = player;
+            if (this.checkWin(row, col, player, board)) {
+              board[row][col] = EMPTY;
+              return VICTORY_SCORE;
+            }
+            board[row][col] = EMPTY;
           }
         }
-        return 0; // No lleva a la victoria, puntuación neutral
-      }
-  
-      // Función principal para seleccionar la mejor columna
-      function findBestMove(player) {
+        return 0;
+    }
+
+    // Función principal para seleccionar la mejor columna
+    findBestMove(player, board) {
         let bestColumn = -1;
-        let bestScore = -Infinity;
-  
+        let bestScore = -VICTORY_SCORE;
+    
         for (let col = 0; col < this.size; col++) {
-          if (board[0][col] === 0) {
-            const score = evaluateColumn.call(this, col, player);
+          if (board[0][col] === EMPTY) {
+            const score = this.evaluateColumn(col, player, board);
             if (score > bestScore) {
               bestScore = score;
               bestColumn = col;
             }
           }
         }
-  
         return bestColumn;
-      }
-  
-      // Llama a la función findBestMove para determinar la mejor columna para el jugador actual
-      return findBestMove.call(this, this.color); 
     }
-  }
+    
+    compute(board, time) {
+        return this.findBestMove(this.color, board);
+    }
+}
+
 /*
  * A class for board operations (it is not the board but a set of operations over it)
  */
