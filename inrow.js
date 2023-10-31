@@ -263,12 +263,7 @@ class Environment extends MainClient{
         this.board = new Board()
     }
 
-    setPlayers(players){ 
-        this.players = {
-        'W': new RandomPlayer(),
-        'B': new RandomPlayer()
-      }
-    }
+    setPlayers(players){ this.players = players }
 
 	// Initializes the game 
 	init(){ 
