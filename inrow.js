@@ -1,10 +1,6 @@
-const EMPTY = 0;
-const VICTORY_SCORE = Infinity;
-const LOSS_SCORE = -Infinity;
-
 class Agent {
     constructor(){}
-    init(color,board,time = 20000, k) {
+    init(color,board,time = 20000, k=7) {
         this.color = color;
         this.opponentColor = this.color === 'W' ? 'B' : 'W';
         this.time = time;
@@ -31,27 +27,34 @@ class Agent {
     }
 
     // Función para verificar si un jugador ha ganado en cualquier dirección
-    checkWin(row, col, player) {
+    checkWin(row, col, player,board) {
         const directions = [
             [1, 0], [0, 1], [1, 1], [-1, 1] // Abajo, Derecha, Diagonal Derecha-Abajo, Diagonal Izquierda-Abajo
         ];
         for (const [rowDir, colDir] of directions) {
-            if (checkDirection.call(this, row, col, rowDir, colDir, player,board)) {
+            if (this.checkDirection(row, col, rowDir, colDir, player, board)) {
             return true;
             }
         }
         return false;
     }
 
+    isBoardFull(board) {
+        for (let row of board) {
+            if (row.includes(0)) return false;
+        }
+        return true;
+    }
+
     minimax(board, depth, maximizingPlayer, alpha, beta) {
-        if (depth === 0) return 0; // Profundidad límite alcanzada, evaluar tablero
+        if (depth === 0 || this.isBoardFull(board)) return 0; // Profundidad límite alcanzada, evaluar tablero
 
         for (let row = 0; row < this.size; row++) {
             for (let col = 0; col < this.size; col++) {
-            if (board[row][col] === EMPTY && this.checkWin(row, col, this.color, board)) {
-                return maximizingPlayer ? VICTORY_SCORE : LOSS_SCORE; // Evaluar si es estado de victoria o derrota
-            } else if (board[row][col] === EMPTY && this.checkWin(row, col, this.opponentColor, board)) {
-                return maximizingPlayer ? LOSS_SCORE : VICTORY_SCORE; // Evaluar si es estado de victoria o derrota para el oponente
+            if (board[row][col] === 0 && this.checkWin(row, col, this.color, board)) {
+                return maximizingPlayer ? Infinity : -Infinity; // Evaluar si es estado de victoria o derrota
+            } else if (board[row][col] === 0 && this.checkWin(row, col, this.opponentColor, board)) {
+                return maximizingPlayer ? -Infinity : Infinity; // Evaluar si es estado de victoria o derrota para el oponente
             }
             }
         }
@@ -63,7 +66,7 @@ class Agent {
             if (row !== -1) {
                 board[row][col] = this.color;
                 const score = this.minimax(board, depth - 1, false, alpha, beta);
-                board[row][col] = EMPTY;
+                board[row][col] = 0;
                 maxEval = Math.max(maxEval, score);
                 alpha = Math.max(alpha, score);
                 if (beta <= alpha) break; // Poda Alfa-Beta
@@ -77,7 +80,7 @@ class Agent {
             if (row !== -1) {
                 board[row][col] = this.opponentColor;
                 const score = this.minimax(board, depth - 1, true, alpha, beta);
-                board[row][col] = EMPTY;
+                board[row][col] = 0;
                 minEval = Math.min(minEval, score);
                 beta = Math.min(beta, score);
                 if (beta <= alpha) break; // Poda Alfa-Beta
@@ -89,7 +92,7 @@ class Agent {
 
     findAvailableRow(board, col) {
         for (let row = this.size - 1; row >= 0; row--) {
-            if (board[row][col] === EMPTY) return row;
+            if (board[row][col] === 0) return row;
         }
         return -1;
     }
@@ -102,7 +105,7 @@ class Agent {
             if (row !== -1) {
             board[row][col] = this.color;
             const moveEval = this.minimax(board, depth, false, -Infinity, Infinity);
-            board[row][col] = EMPTY;
+            board[row][col] = 0;
             if (moveEval > maxEval) {
                 maxEval = moveEval;
                 bestMove = col;
@@ -116,6 +119,10 @@ class Agent {
         return this.findBestMove(board);
     }
 }
+
+
+
+
 
 /*
  * A class for board operations (it is not the board but a set of operations over it)
